@@ -2,7 +2,15 @@ package pop3server;
 
 import merrimackutil.cli.LongOption;
 import merrimackutil.cli.OptionParser;
+import merrimackutil.json.InvalidJSONException;
+import merrimackutil.json.JsonIO;
+import merrimackutil.json.types.JSONObject;
+import merrimackutil.json.types.JSONType;
 import merrimackutil.util.Tuple;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InvalidObjectException;
 
 public class Pop3Server {
 
@@ -73,6 +81,21 @@ public class Pop3Server {
 
         System.out.println("Using config file: " + configFile);
 
+        // Check if the config file exists
+        File file = new File(configFile);
+        if (!file.exists()) {
+            System.out.println("Config file does not exist: " + configFile);
+            System.exit(1);
+        }
+
+        // Deserialize the config file
+        try {
+            deserialize(JsonIO.readObject(file));
+        } catch (InvalidJSONException | FileNotFoundException | InvalidObjectException e) {
+            System.err.println("Error reading config file!!!");
+            System.exit(1);
+        }
+
     }
 
     public static void main(String[] args) {
@@ -81,5 +104,32 @@ public class Pop3Server {
             System.exit(1);
         }
         processArgs(args);
+    }
+
+    // ---------- Private methods ---------- //
+
+    /**
+     * Deserializes the JSON configuration file
+     *
+     * @param jsonType - The JSONType object representing the configuration file
+     * @throws InvalidObjectException - If the JSON object is not a JSONObject
+     */
+    private static void deserialize(JSONType jsonType) throws InvalidObjectException {
+        // Check if the JSON object is a JSONObject
+        if (!(jsonType instanceof JSONObject)) {
+            throw new InvalidObjectException("JSONObject expected.");
+        }
+
+        JSONObject obj = (JSONObject) jsonType;
+
+        // Check that all required fields are present
+        obj.checkValidity(new String[]{"port", "server-name", "spool", "log", "accounts"});
+
+        // Deserialize the fields
+        port = obj.getInt("port");
+        serverName = obj.getString("server-name");
+        spool = obj.getString("spool");
+        logFile = obj.getString("log");
+        accountFile = obj.getString("accounts");
     }
 }
