@@ -1,14 +1,18 @@
 package pop3server;
 
+import merrimackutil.cli.LongOption;
+import merrimackutil.cli.OptionParser;
+import merrimackutil.util.Tuple;
+
 public class Pop3Server {
 
     // Private variables needed for the POP3 server
-    private String configFile = "test-data/pop3d.json";
-    private int port;
-    private String serverName;
-    private String spool;
-    private String logFile;
-    private String accountFile;
+    private static String configFile = "test-data/pop3d.json";
+    private static int port;
+    private static String serverName;
+    private static String spool;
+    private static String logFile;
+    private static String accountFile;
 
     /**
      * Prints the usage message for the program
@@ -29,13 +33,53 @@ public class Pop3Server {
      * @param args - The arguments passed to the program
      */
     public static void processArgs(String[] args) {
+        OptionParser parser;
 
-        //OptionParser parser;
+        boolean doHelp = false;
+
+        LongOption [] opts = new LongOption[2];
+        opts[0] = new LongOption("config", true, 'c');
+        opts[1] = new LongOption("help", false, 'h');
+
+        Tuple<Character, String> currOpt;
+
+        parser = new OptionParser(args);
+        parser.setLongOpts(opts);
+
+        parser.setOptString("c:h");
+
+        while (parser.getOptIdx() != args.length) {
+
+            currOpt = parser.getLongOpt(false);
+
+            switch (currOpt.getFirst()) {
+                case 'c':
+                    configFile = currOpt.getSecond();
+                    break;
+                case 'h':
+                    doHelp = true;
+                    break;
+                default:
+                    System.out.println("Invalid option" + currOpt.getFirst());
+                    usage();
+                    return;
+            }
+        }
+
+        if (doHelp) {
+            usage();
+            System.exit(0);
+        }
+
+        System.out.println("Using config file: " + configFile);
 
     }
 
     public static void main(String[] args) {
-        System.out.println("POP3 Server is running...");
-        usage();
+        if (args.length > 3) {
+            usage();
+            System.exit(1);
+        }
+        processArgs(args);
     }
 }

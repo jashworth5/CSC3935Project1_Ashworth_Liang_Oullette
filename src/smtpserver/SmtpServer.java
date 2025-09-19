@@ -1,13 +1,16 @@
 package smtpserver;
 
+import merrimackutil.cli.LongOption;
+import merrimackutil.cli.OptionParser;
+
 public class SmtpServer {
 
     // Private variables needed for the SMTP server
-    private String configFile = "test-data/smtpd.json";
-    private int port;
-    private String serverName;
-    private String logFile;
-    private String spool;
+    private static String configFile = "test-data/smtpd.json";
+    private static int port;
+    private static String serverName;
+    private static String logFile;
+    private static String spool;
 
     /**
      * Prints the usage message for the program
@@ -28,11 +31,48 @@ public class SmtpServer {
      * @param args - The arguments passed to the program
      */
     public static void processArgs(String[] args) {
-        // Argument processing logic would go here
+        OptionParser parser;
+
+        boolean doHelp = false;
+
+        LongOption[] opts = new LongOption[2];
+        opts[0] = new LongOption("config", true, 'c');
+        opts[1] = new LongOption("help", false, 'h');
+
+        parser = new OptionParser(args);
+
+        parser.setLongOpts(opts);
+        parser.setOptString("c:h");
+
+        while (parser.getOptIdx() != args.length) {
+            var currOpt = parser.getLongOpt(false);
+
+            switch (currOpt.getFirst()) {
+                case 'c':
+                    configFile = currOpt.getSecond();
+                    break;
+                case 'h':
+                    doHelp = true;
+                    break;
+                default:
+                    System.out.println("Invalid option" + currOpt.getFirst());
+                    usage();
+                    System.exit(1);
+            }
+        }
+        if (doHelp) {
+            usage();
+            System.exit(0);
+        }
+
+        System.out.println("Using config file: " + configFile);
     }
 
     public static void main(String[] args) {
-        System.out.println("SMTP Server is running...");
-        usage();
+        if (args.length > 3) {
+            usage();
+            System.exit(1);
+        }
+        processArgs(args);
     }
 }
